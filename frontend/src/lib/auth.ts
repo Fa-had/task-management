@@ -2,9 +2,9 @@
 // These run in both Server Components and middleware.
 
 import { cookies } from "next/headers";
+import { SESSION_COOKIE, SESSION_MAX_AGE } from "./auth-constants";
 
-export const SESSION_COOKIE = "antflow_session";
-export const SESSION_MAX_AGE = 7 * 24 * 60 * 60; // 7 days in seconds
+export { SESSION_COOKIE, SESSION_MAX_AGE };
 
 /**
  * Set the session cookie after a successful login/signup.

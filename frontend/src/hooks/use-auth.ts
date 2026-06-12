@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth-store";
 import { authApi } from "@/lib/api";
-import { SESSION_COOKIE, SESSION_MAX_AGE } from "@/lib/auth";
+import { SESSION_COOKIE, SESSION_MAX_AGE } from "@/lib/auth-constants";
 import type { SignupPayload, LoginPayload } from "@/types";
 import { toast } from "sonner";
 import { TASKS_KEY } from "./use-tasks";
