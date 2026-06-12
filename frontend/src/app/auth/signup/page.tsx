@@ -7,28 +7,27 @@ import { z } from "zod";
 import { motion } from "framer-motion";
 import { Loader2, Mail, Lock, User } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(100),
   email: z.string().email("Please enter a valid email"),
   password: z.string().min(8, "Password must be at least 8 characters").max(72),
 });
-
 type SignupFormData = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
   const { signup, isSigningUp } = useAuth();
-
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<SignupFormData>({ resolver: zodResolver(signupSchema) });
 
-  const onSubmit = (data: SignupFormData) => signup(data);
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 p-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -38,68 +37,69 @@ export default function SignupPage() {
         <div className="text-center mb-8">
           <div className="text-4xl mb-2">🐜</div>
           <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-            Join task_management
+            Join AntFlow
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
             Start your productive colony today
           </p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Name</label>
+        <form onSubmit={handleSubmit((d) => signup(d))} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="name">Name</Label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
-                type="text"
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                id="name"
                 placeholder="Your name"
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500 transition"
+                className="pl-9 bg-white/50 dark:bg-slate-800/50"
                 {...register("name")}
               />
             </div>
             {errors.name && (
-              <p className="text-danger text-xs mt-1">{errors.name.message}</p>
+              <p className="text-danger text-xs">{errors.name.message}</p>
             )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Email</label>
+          <div className="space-y-1.5">
+            <Label htmlFor="email">Email</Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                id="email"
                 type="email"
                 placeholder="you@example.com"
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500 transition"
+                className="pl-9 bg-white/50 dark:bg-slate-800/50"
                 {...register("email")}
               />
             </div>
             {errors.email && (
-              <p className="text-danger text-xs mt-1">{errors.email.message}</p>
+              <p className="text-danger text-xs">{errors.email.message}</p>
             )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Password</label>
+          <div className="space-y-1.5">
+            <Label htmlFor="password">Password</Label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                id="password"
                 type="password"
                 placeholder="Min. 8 characters"
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500 transition"
+                className="pl-9 bg-white/50 dark:bg-slate-800/50"
                 {...register("password")}
               />
             </div>
             {errors.password && (
-              <p className="text-danger text-xs mt-1">
-                {errors.password.message}
-              </p>
+              <p className="text-danger text-xs">{errors.password.message}</p>
             )}
           </div>
 
-          <button
+          <Button
             type="submit"
+            variant="gradient"
+            className="w-full"
             disabled={isSigningUp}
-            className="btn-primary w-full flex items-center justify-center gap-2 py-2.5"
           >
             {isSigningUp ? (
               <>
@@ -108,7 +108,7 @@ export default function SignupPage() {
             ) : (
               "Create Account"
             )}
-          </button>
+          </Button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground mt-6">

@@ -7,6 +7,9 @@ import { z } from "zod";
 import { motion } from "framer-motion";
 import { Loader2, Mail, Lock } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -23,11 +26,8 @@ export default function LoginPage() {
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormData>({ resolver: zodResolver(loginSchema) });
-
-  const onSubmit = (data: LoginFormData) => login(data);
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 p-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -38,54 +38,53 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <div className="text-4xl mb-2">🐜</div>
           <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-            task_management
+            AntFlow
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
             Sign in to your colony
           </p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Email</label>
+        <form onSubmit={handleSubmit((d) => login(d))} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="email">Email</Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                id="email"
                 type="email"
                 placeholder="you@example.com"
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500 transition"
+                className="pl-9 bg-white/50 dark:bg-slate-800/50"
                 {...register("email")}
               />
             </div>
             {errors.email && (
-              <p className="text-danger text-xs mt-1">{errors.email.message}</p>
+              <p className="text-danger text-xs">{errors.email.message}</p>
             )}
           </div>
 
-          {/* Password */}
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Password</label>
+          <div className="space-y-1.5">
+            <Label htmlFor="password">Password</Label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                id="password"
                 type="password"
                 placeholder="••••••••"
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500 transition"
+                className="pl-9 bg-white/50 dark:bg-slate-800/50"
                 {...register("password")}
               />
             </div>
             {errors.password && (
-              <p className="text-danger text-xs mt-1">
-                {errors.password.message}
-              </p>
+              <p className="text-danger text-xs">{errors.password.message}</p>
             )}
           </div>
 
-          <button
+          <Button
             type="submit"
+            variant="gradient"
+            className="w-full"
             disabled={isLoggingIn}
-            className="btn-primary w-full flex items-center justify-center gap-2 py-2.5"
           >
             {isLoggingIn ? (
               <>
@@ -94,11 +93,11 @@ export default function LoginPage() {
             ) : (
               "Sign In"
             )}
-          </button>
+          </Button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground mt-6">
-          New to task_management?{" "}
+          New to AntFlow?{" "}
           <Link
             href="/auth/signup"
             className="text-primary-600 hover:underline font-medium"

@@ -22,7 +22,12 @@ export const useFilterStore = create<FilterState>((set) => ({
 
   setFilter: (key, value) =>
     set((state) => ({
-      filters: { ...state.filters, [key]: value, page: key !== "page" ? 1 : (value as number) },
+      filters: {
+        ...state.filters,
+        [key]: value,
+        // Reset to page 1 on any filter/search change (not page itself)
+        ...(key !== "page" && { page: 1 }),
+      },
     })),
 
   resetFilters: () => set({ filters: defaultFilters }),
