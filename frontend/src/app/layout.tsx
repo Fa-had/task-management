@@ -12,9 +12,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "task_management — Task Management",
+  title: "Ant Colony",
   description: "A premium ant-colony powered task management experience.",
-  icons: { icon: "/favicon.ico" },
+  icons: { icon: "/icon.png" },
 };
 
 export default function RootLayout({
