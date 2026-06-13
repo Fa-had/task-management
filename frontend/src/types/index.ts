@@ -99,13 +99,29 @@ export interface DashboardStats {
 
 // Ant Colony
 
-export type AntBehavior = "idle" | "walking" | "celebrating" | "rushing" | "wandering";
+export type AntBehavior =
+  | "idle"
+  | "wandering"
+  | "walking"
+  | "animated"
+  | "investigating"
+  | "celebrating"
+  | "gathering"
+  | "messenger"
+  | "returning";
 
 export interface AntState {
   id: number;
   x: number;
   y: number;
   behavior: AntBehavior;
-  direction: number; // angle in degrees
+  direction: number;
   speed: number;
+  targetAngle: number;
+  behaviorTimer: number;
+  pauseTimer: number;
+  animatedTimer: number;
+  targetX: number | null;
+  targetY: number | null;
+  scale: number;
 }

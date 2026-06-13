@@ -5,9 +5,20 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
-import { X, Loader2 } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import type { Task } from "@/types";
 import { useCreateTask, useUpdateTask } from "@/hooks/use-tasks";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const taskSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
@@ -33,7 +44,8 @@ export function TaskForm({ task, onClose }: Props) {
   const {
     register,
     handleSubmit,
-    reset,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<TaskFormData>({
     resolver: zodResolver(taskSchema),
@@ -48,7 +60,9 @@ export function TaskForm({ task, onClose }: Props) {
 
   // Close on Escape
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
@@ -58,7 +72,6 @@ export function TaskForm({ task, onClose }: Props) {
       ...data,
       due_date: data.due_date ? new Date(data.due_date).toISOString() : null,
     };
-
     if (isEditing) {
       updateTask({ id: task.id, payload }, { onSuccess: onClose });
     } else {
@@ -73,7 +86,9 @@ export function TaskForm({ task, onClose }: Props) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       {/* Modal */}
       <motion.div
@@ -88,103 +103,125 @@ export function TaskForm({ task, onClose }: Props) {
           <h2 className="text-lg font-semibold">
             {isEditing ? "Edit Task" : "Create New Task"}
           </h2>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-accent transition-colors text-muted-foreground"
+            aria-label="Close"
           >
             <X className="h-4 w-4" />
-          </button>
+          </Button>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
           {/* Title */}
-          <div>
-            <label className="block text-sm font-medium mb-1.5">
+          <div className="space-y-1.5">
+            <Label htmlFor="title">
               Title <span className="text-danger">*</span>
-            </label>
-            <input
-              type="text"
+            </Label>
+            <Input
+              id="title"
               placeholder="What needs to be done?"
-              className="w-full px-3 py-2.5 rounded-lg border bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500 transition text-sm"
+              className="bg-white/50 dark:bg-slate-800/50"
               {...register("title")}
             />
             {errors.title && (
-              <p className="text-danger text-xs mt-1">{errors.title.message}</p>
+              <p className="text-danger text-xs">{errors.title.message}</p>
             )}
           </div>
 
           {/* Description */}
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Description</label>
-            <textarea
+          <div className="space-y-1.5">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
               rows={3}
               placeholder="Add some details..."
-              className="w-full px-3 py-2.5 rounded-lg border bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500 transition text-sm resize-none"
+              className="bg-white/50 dark:bg-slate-800/50"
               {...register("description")}
             />
           </div>
 
           {/* Status + Priority row */}
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium mb-1.5">Status</label>
-              <select
-                className="w-full px-3 py-2.5 rounded-lg border bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500 transition text-sm"
-                {...register("status")}
+            <div className="space-y-1.5">
+              <Label>Status</Label>
+              <Select
+                defaultValue={watch("status")}
+                onValueChange={(v) =>
+                  setValue("status", v as TaskFormData["status"])
+                }
               >
-                <option value="todo">To Do</option>
-                <option value="in_progress">In Progress</option>
-                <option value="done">Done</option>
-              </select>
+                <SelectTrigger className="bg-white/50 dark:bg-slate-800/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todo">To Do</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="done">Done</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1.5">Priority</label>
-              <select
-                className="w-full px-3 py-2.5 rounded-lg border bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500 transition text-sm"
-                {...register("priority")}
+            <div className="space-y-1.5">
+              <Label>Priority</Label>
+              <Select
+                defaultValue={watch("priority")}
+                onValueChange={(v) =>
+                  setValue("priority", v as TaskFormData["priority"])
+                }
               >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="urgent">Urgent</option>
-              </select>
+                <SelectTrigger className="bg-white/50 dark:bg-slate-800/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">🟢 Low</SelectItem>
+                  <SelectItem value="medium">🟡 Medium</SelectItem>
+                  <SelectItem value="high">🟠 High</SelectItem>
+                  <SelectItem value="urgent">🔴 Urgent</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           {/* Due date */}
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Due Date</label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="due_date">Due Date</Label>
+            <Input
+              id="due_date"
               type="date"
-              className="w-full px-3 py-2.5 rounded-lg border bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500 transition text-sm"
+              className="bg-white/50 dark:bg-slate-800/50"
               {...register("due_date")}
             />
           </div>
 
           {/* Actions */}
           <div className="flex gap-3 pt-2">
-            <button
+            <Button
               type="button"
+              variant="outline"
+              className="flex-1"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 rounded-lg border hover:bg-accent transition-colors text-sm font-medium"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="gradient"
+              className="flex-1"
               disabled={isPending}
-              className="flex-1 btn-primary flex items-center justify-center gap-2 py-2.5"
             >
               {isPending ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> Saving...</>
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Saving...
+                </>
               ) : isEditing ? (
                 "Save Changes"
               ) : (
                 "Create Task"
               )}
-            </button>
+            </Button>
           </div>
         </form>
       </motion.div>

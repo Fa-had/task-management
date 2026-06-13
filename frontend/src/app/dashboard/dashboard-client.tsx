@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus } from "lucide-react";
 import { useTasks } from "@/hooks/use-tasks";
@@ -9,8 +9,9 @@ import { TaskForm } from "@/components/tasks/task-form";
 import { SearchBar } from "@/components/tasks/search-bar";
 import { FilterBar } from "@/components/tasks/filter-bar";
 import { DashboardStats } from "@/components/layout/dashboard-stats";
-import { AntColony } from "@/components/ants/ant-colony";
+import { AntColony, AntCelebration } from "@/components/ants/ant-colony";
 import { useFilterStore } from "@/store/filter-store";
+import { useAntEventStore } from "@/store/ant-events";
 
 interface Props {
   initialPage: number;
@@ -19,13 +20,26 @@ interface Props {
 
 export function DashboardClient({ initialPage, initialSearch }: Props) {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
   const { setFilter } = useFilterStore();
+  const lastEvent = useAntEventStore((s) => s.lastEvent);
 
   // Seed store from URL params on first render
   useEffect(() => {
     if (initialPage > 1) setFilter("page", initialPage);
     if (initialSearch) setFilter("search", initialSearch);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Show celebration overlay on task completion
+  const lastEventRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!lastEvent) return;
+    if (lastEventRef.current === String(lastEvent.timestamp)) return;
+    lastEventRef.current = String(lastEvent.timestamp);
+    if (lastEvent.type === "task_completed") {
+      setShowCelebration(true);
+    }
+  }, [lastEvent]);
 
   const { data, isLoading, isError } = useTasks();
 
@@ -47,6 +61,7 @@ export function DashboardClient({ initialPage, initialSearch }: Props) {
       <AntColony
         taskCount={data?.total ?? 0}
         completionRate={stats.completed / Math.max(stats.total, 1)}
+        lastEvent={lastEvent}
       />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -102,6 +117,13 @@ export function DashboardClient({ initialPage, initialSearch }: Props) {
       {/* Task Form Modal */}
       <AnimatePresence>
         {isFormOpen && <TaskForm onClose={() => setIsFormOpen(false)} />}
+      </AnimatePresence>
+
+      {/* Celebration Overlay */}
+      <AnimatePresence>
+        {showCelebration && (
+          <AntCelebration onDone={() => setShowCelebration(false)} />
+        )}
       </AnimatePresence>
     </div>
   );
