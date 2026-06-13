@@ -1,4 +1,4 @@
-# 🐜 task_management — Task Management Application
+# 🐜 Ant Flow Task Management Application
 
 A modern full-stack task management platform featuring a premium SaaS experience, playful productivity-focused animations, and a subtle ant-colony inspired interaction system.
 

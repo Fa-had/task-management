@@ -10,22 +10,6 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // task_management design system
-        primary: {
-          DEFAULT: "#6366F1",
-          50: "#eef2ff",
-          100: "#e0e7ff",
-          500: "#6366F1",
-          600: "#4f46e5",
-          700: "#4338ca",
-        },
-        secondary: {
-          DEFAULT: "#38BDF8",
-          500: "#38BDF8",
-        },
-        success: "#10B981",
-        warning: "#F59E0B",
-        danger: "#EF4444",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
