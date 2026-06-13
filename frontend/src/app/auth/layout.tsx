@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "AntFlow — Sign In",
+  title: "Sign In",
 };
 
 export default function AuthLayout({

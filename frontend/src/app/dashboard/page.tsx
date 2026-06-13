@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { DashboardClient } from "./dashboard-client";
 
 export const metadata: Metadata = {
-  title: "Dashboard — task_management",
+  title: "Dashboard",
 };
 
 // Next.js 16: params / searchParams are Promises — always await them.
