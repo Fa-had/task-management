@@ -1,41 +1,71 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Plus, LayoutGrid, List, CheckCheck } from "lucide-react";
-import { useTasks, useUpdateTask, useDeleteTask } from "@/hooks/use-tasks";
-import { TaskList } from "@/components/tasks/task-list";
-import { TaskCard } from "@/components/tasks/task-card";
+import { Plus, SlidersHorizontal, X } from "lucide-react";
+import { useTasks, useUpdateTask } from "@/hooks/use-tasks";
 import { TaskForm } from "@/components/tasks/task-form";
 import { SearchBar } from "@/components/tasks/search-bar";
 import { FilterBar } from "@/components/tasks/filter-bar";
-import { ActivityTimeline } from "@/components/tasks/activity-timeline";
-import { cn } from "@/lib/utils";
-
-type View = "list" | "grid";
+import { ColonyStatsBar } from "@/components/ants/colony-stats-bar";
+import { TaskColonyView } from "@/components/ants/task-colony-view";
+import { AntCelebration } from "@/components/ants/ant-colony";
+import { useAntEventStore } from "@/store/ant-events";
+import type { Task, TaskStatus } from "@/types";
 
 export function AllTasksClient() {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [view, setView] = useState<View>("list");
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   const { data, isLoading, isError } = useTasks();
   const { mutate: updateTask } = useUpdateTask();
+  const lastEvent = useAntEventStore((s) => s.lastEvent);
 
-  const pendingTasks = (data?.tasks ?? []).filter(
-    (t) => t.status !== "done" && t.status !== "archived"
-  );
+  // Celebration overlay on task completion
+  const lastEventRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!lastEvent) return;
+    if (lastEventRef.current === String(lastEvent.timestamp)) return;
+    lastEventRef.current = String(lastEvent.timestamp);
+    if (lastEvent.type === "task_completed") {
+      setShowCelebration(true);
+    }
+  }, [lastEvent]);
 
-  const handleCompleteAll = () => {
-    if (!pendingTasks.length) return;
-    if (!confirm(`Mark all ${pendingTasks.length} pending tasks as done?`)) return;
-    pendingTasks.forEach((t) => updateTask({ id: t.id, payload: { status: "done" } }));
+  const stats = useMemo(() => {
+    const tasks = data?.tasks ?? [];
+    const now = new Date();
+    return {
+      total: data?.total ?? 0,
+      completed: tasks.filter((t) => t.status === "done").length,
+      inProgress: tasks.filter((t) => t.status === "in_progress").length,
+      overdue: tasks.filter(
+        (t) => t.due_date && new Date(t.due_date) < now && t.status !== "done"
+      ).length,
+    };
+  }, [data]);
+
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
+    setIsFormOpen(true);
+  };
+
+  const handleStatusChange = (id: string, status: TaskStatus) => {
+    updateTask({ id, payload: { status } });
+  };
+
+  const closeForm = () => {
+    setIsFormOpen(false);
+    setEditingTask(null);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/30">
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold">All Tasks</h1>
             <p className="text-muted-foreground text-sm mt-0.5">
@@ -44,39 +74,18 @@ export function AllTasksClient() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* View toggle */}
-            <div className="hidden sm:flex items-center gap-1 p-1 rounded-lg bg-accent">
-              {(["list", "grid"] as View[]).map((v) => (
-                <button
-                  key={v}
-                  onClick={() => setView(v)}
-                  className={cn(
-                    "p-1.5 rounded-md transition-colors",
-                    view === v
-                      ? "bg-white dark:bg-slate-800 shadow-sm text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                  title={`${v} view`}
-                >
-                  {v === "list" ? (
-                    <List className="h-4 w-4" />
-                  ) : (
-                    <LayoutGrid className="h-4 w-4" />
-                  )}
-                </button>
-              ))}
-            </div>
-
-            {/* Complete all */}
-            {pendingTasks.length > 0 && (
-              <button
-                onClick={handleCompleteAll}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-              >
-                <CheckCheck className="h-4 w-4" />
-                Complete all
-              </button>
-            )}
+            {/* Filter toggle */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm transition-colors ${
+                showFilters
+                  ? "bg-primary-50 dark:bg-primary-900/20 border-primary-300 dark:border-primary-700 text-primary-600"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
+              }`}
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              Filters
+            </button>
 
             {/* New task */}
             <motion.button
@@ -91,42 +100,57 @@ export function AllTasksClient() {
           </div>
         </div>
 
-        {/* Search + Filters */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <SearchBar />
-          <FilterBar />
+        {/* Stats bar */}
+        <div className="mb-4">
+          <ColonyStatsBar
+            total={stats.total}
+            completed={stats.completed}
+            inProgress={stats.inProgress}
+            overdue={stats.overdue}
+            isLoading={isLoading}
+          />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Tasks */}
-          <div className="lg:col-span-2">
-            {view === "list" ? (
-              <TaskList
-                tasks={data?.tasks ?? []}
-                totalPages={data?.total_pages ?? 1}
-                currentPage={data?.page ?? 1}
-                isLoading={isLoading}
-                isError={isError}
-              />
-            ) : (
-              /* Grid view */
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {isLoading
-                  ? Array.from({ length: 6 }).map((_, i) => (
-                      <div key={i} className="task-card h-32 animate-pulse bg-slate-100 dark:bg-slate-800" />
-                    ))
-                  : (data?.tasks ?? []).map((task) => (
-                      <TaskCard key={task.id} task={task} />
-                    ))}
+        {/* Floating filter overlay */}
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="filter-overlay"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-sm font-medium">Filters</span>
+                <button
+                  onClick={() => setShowFilters(false)}
+                  className="ml-auto p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-            )}
-          </div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <SearchBar />
+                <FilterBar />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          {/* Activity Timeline */}
-          <div className="hidden lg:block">
-            <ActivityTimeline tasks={data?.tasks ?? []} />
+        {/* Colony view */}
+        {isError ? (
+          <div className="text-center py-16 text-muted-foreground">
+            <p className="text-4xl mb-4">{"\u26A0\uFE0F"}</p>
+            <p className="font-medium">Failed to load tasks. Please try again.</p>
           </div>
-        </div>
+        ) : (
+          <TaskColonyView
+            tasks={data?.tasks ?? []}
+            onEditTask={handleEditTask}
+            onStatusChange={handleStatusChange}
+          />
+        )}
       </main>
 
       {/* Mobile FAB */}
@@ -140,8 +164,18 @@ export function AllTasksClient() {
         <Plus className="h-6 w-6" />
       </motion.button>
 
+      {/* Task Form Modal */}
       <AnimatePresence>
-        {isFormOpen && <TaskForm onClose={() => setIsFormOpen(false)} />}
+        {isFormOpen && (
+          <TaskForm task={editingTask ?? undefined} onClose={closeForm} />
+        )}
+      </AnimatePresence>
+
+      {/* Celebration Overlay */}
+      <AnimatePresence>
+        {showCelebration && (
+          <AntCelebration onDone={() => setShowCelebration(false)} />
+        )}
       </AnimatePresence>
     </div>
   );

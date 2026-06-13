@@ -12,7 +12,7 @@ const PROTECTED_PREFIXES = ["/dashboard"];
 // Routes that should redirect to /dashboard if already authenticated
 const AUTH_PREFIXES = ["/auth"];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Read auth state from Zustand persisted store in localStorage via a cookie

@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-query";
 import { tasksApi } from "@/lib/api";
 import { useFilterStore } from "@/store/filter-store";
+import { useAntEventStore } from "@/store/ant-events";
 import type { CreateTaskPayload, UpdateTaskPayload, Task } from "@/types";
 import { toast } from "sonner";
 
@@ -37,11 +38,13 @@ export function useTask(id: string) {
 // Create task
 export function useCreateTask() {
   const qc = useQueryClient();
+  const emit = useAntEventStore((s) => s.emit);
 
   return useMutation({
     mutationFn: (payload: CreateTaskPayload) => tasksApi.create(payload),
     onSuccess: (newTask) => {
       qc.invalidateQueries({ queryKey: [TASKS_KEY] });
+      emit("task_created");
       toast.success("🐜 Task created! The colony got to work.");
       return newTask;
     },
@@ -54,6 +57,7 @@ export function useCreateTask() {
 // Update task
 export function useUpdateTask() {
   const qc = useQueryClient();
+  const emit = useAntEventStore((s) => s.emit);
 
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: UpdateTaskPayload }) =>
@@ -89,6 +93,7 @@ export function useUpdateTask() {
 
     onSuccess: (task) => {
       if (task.status === "done") {
+        emit("task_completed");
         toast.success("🐜 Task completed! The colony celebrates.");
       } else {
         toast.success("Task updated successfully.");

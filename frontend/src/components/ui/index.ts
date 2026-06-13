@@ -4,6 +4,7 @@ export * from "./button";
 export * from "./dialog";
 export * from "./input";
 export * from "./label";
+export * from "./popover";
 export * from "./select";
 export * from "./separator";
 export * from "./skeleton";

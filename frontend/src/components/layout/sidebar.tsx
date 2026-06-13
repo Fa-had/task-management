@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
@@ -25,6 +26,9 @@ export function Sidebar() {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const { user, logout, isLoggingOut } = useAuth();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
 
@@ -81,12 +85,20 @@ export function Sidebar() {
             className="w-full justify-start gap-3 text-muted-foreground"
             onClick={toggleTheme}
           >
-            {theme === "dark" ? (
-              <Sun className="h-4 w-4" />
+            {mounted ? (
+              theme === "dark" ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )
             ) : (
               <Moon className="h-4 w-4" />
             )}
-            {theme === "dark" ? "Light mode" : "Dark mode"}
+            {mounted
+              ? theme === "dark"
+                ? "Light mode"
+                : "Dark mode"
+              : "Dark mode"}
           </Button>
 
           {/* User row */}
@@ -138,8 +150,12 @@ export function Sidebar() {
             onClick={toggleTheme}
             aria-label="Toggle theme"
           >
-            {theme === "dark" ? (
-              <Sun className="h-4 w-4" />
+            {mounted ? (
+              theme === "dark" ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )
             ) : (
               <Moon className="h-4 w-4" />
             )}
