@@ -42,6 +42,9 @@ func (h *AuthHandler) Signup(c *gin.Context) {
 		return
 	}
 
+	// Set refresh token in httpOnly cookie (same as Login)
+	isSecure := h.authService.Config().Env == "production"
+	c.SetCookie("refresh_token", resp.RefreshToken, 7*24*60*60, "/", "", isSecure, true)
 	c.JSON(http.StatusCreated, resp)
 }
 
@@ -61,7 +64,11 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	}
 
 	// Set refresh token in httpOnly cookie
-	c.SetCookie("refresh_token", resp.RefreshToken, 7*24*60*60, "/", "", true, true)
+	// Only set Secure flag in production (HTTPS). In dev (HTTP), browsers reject Secure cookies.
+	isSecure := h.authService.Config().Env == "production"
+	// Set domain to empty string so cookie is scoped to the request's host,
+	// allowing it to work correctly with cross-origin requests (frontend on :3000, API on :8080).
+	c.SetCookie("refresh_token", resp.RefreshToken, 7*24*60*60, "/", "", isSecure, true)
 	c.JSON(http.StatusOK, resp)
 }
 
@@ -86,6 +93,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 // Logout godoc
 // POST /auth/logout
 func (h *AuthHandler) Logout(c *gin.Context) {
-	c.SetCookie("refresh_token", "", -1, "/", "", true, true)
+	isSecure := h.authService.Config().Env == "production"
+	c.SetCookie("refresh_token", "", -1, "/", "", isSecure, true)
 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
 }
