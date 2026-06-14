@@ -100,3 +100,72 @@ export const clearAccessToken = () => {
     sessionStorage.removeItem("access_token");
   }
 };
+
+// ─── Proactive token refresh ─────────────────────────────────────────────────
+// Decode JWT payload to check expiry without a library
+function decodeTokenPayload(token: string): Record<string, unknown> | null {
+  try {
+    const base64 = token.split(".")[1];
+    const json = atob(base64.replace(/-/g, "+").replace(/_/g, "/"));
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
+function isTokenExpiringSoon(token: string, bufferSeconds = 60): boolean {
+  const payload = decodeTokenPayload(token);
+  if (!payload || typeof payload.exp !== "number") return true;
+  // Refresh if within `bufferSeconds` of expiry
+  return payload.exp * 1000 < Date.now() + bufferSeconds * 1000;
+}
+
+let proactiveRefreshInitiated = false;
+
+function initProactiveRefresh() {
+  if (proactiveRefreshInitiated) return;
+  proactiveRefreshInitiated = true;
+
+  if (typeof document === "undefined") return;
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible") return;
+
+    const token = getAccessToken();
+    if (!token) {
+      // No access token but might have a valid refresh cookie — try refreshing
+      tryProactiveRefresh();
+      return;
+    }
+
+    if (isTokenExpiringSoon(token, 120)) {
+      tryProactiveRefresh();
+    }
+  });
+}
+
+let _proactiveRefreshInFlight = false;
+
+async function tryProactiveRefresh() {
+  if (_proactiveRefreshInFlight || isRefreshing) return;
+  _proactiveRefreshInFlight = true;
+
+  try {
+    const { data } = await axios.post(
+      `${API_URL}/auth/refresh`,
+      {},
+      { withCredentials: true }
+    );
+    const newToken = data.access_token;
+    setAccessToken(newToken);
+  } catch {
+    // Refresh failed — the response interceptor will handle redirect on next API call
+  } finally {
+    _proactiveRefreshInFlight = false;
+  }
+}
+
+// Initialize on import (client-side only)
+if (typeof window !== "undefined") {
+  initProactiveRefresh();
+}

@@ -117,6 +117,11 @@ func (s *AuthService) generateToken(user *models.User, tokenType string, expiry 
 	return token.SignedString([]byte(s.cfg.JWTSecret))
 }
 
+// Config returns the service's configuration.
+func (s *AuthService) Config() *config.Config {
+	return s.cfg
+}
+
 func (s *AuthService) parseToken(tokenStr string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
 		return []byte(s.cfg.JWTSecret), nil
