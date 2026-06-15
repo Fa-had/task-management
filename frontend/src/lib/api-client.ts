@@ -1,4 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import { SESSION_COOKIE } from "./auth-constants";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
@@ -7,6 +8,8 @@ export const apiClient = axios.create({
   headers: { "Content-Type": "application/json" },
   withCredentials: true, // send cookies (refresh token)
 });
+
+let _refreshFailed = false;
 
 // Request interceptor: attach access token
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
@@ -37,6 +40,12 @@ apiClient.interceptors.response.use(
     const url = original.url ?? "";
     const isAuthRequest = url.startsWith("/auth/");
     if (error.response?.status === 401 && !original._retry && !isAuthRequest) {
+      // If a previous refresh already failed, don't retry — go straight to login
+      if (_refreshFailed) {
+        _redirectToLogin();
+        return Promise.reject(error);
+      }
+
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -57,15 +66,15 @@ apiClient.interceptors.response.use(
         );
         const newToken = data.access_token;
         setAccessToken(newToken);
+        _refreshFailed = false;
         processQueue(null, newToken);
         original.headers.Authorization = `Bearer ${newToken}`;
         return apiClient(original);
       } catch (refreshError) {
+        _refreshFailed = true;
         processQueue(refreshError, null);
         clearAccessToken();
-        if (typeof window !== "undefined") {
-          window.location.href = "/auth/login";
-        }
+        _redirectToLogin();
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
@@ -75,6 +84,13 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+function _redirectToLogin() {
+  if (typeof window === "undefined") return;
+  // Clear the lightweight session cookie so middleware stops redirecting to /dashboard
+  document.cookie = `${SESSION_COOKIE}=; path=/; max-age=0`;
+  window.location.replace("/auth/login");
+}
 
 // Token helpers (in-memory + sessionStorage for tab persistence)
 let _accessToken: string | null = null;
@@ -147,7 +163,7 @@ function initProactiveRefresh() {
 let _proactiveRefreshInFlight = false;
 
 async function tryProactiveRefresh() {
-  if (_proactiveRefreshInFlight || isRefreshing) return;
+  if (_proactiveRefreshInFlight || isRefreshing || _refreshFailed) return;
   _proactiveRefreshInFlight = true;
 
   try {
