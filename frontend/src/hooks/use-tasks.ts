@@ -23,6 +23,7 @@ export function useTasks() {
     queryFn: () => tasksApi.list(filters),
     placeholderData: keepPreviousData,
     staleTime: 30_000,
+    retry: false,
   });
 }
 
