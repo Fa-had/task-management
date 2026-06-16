@@ -35,7 +35,7 @@ func (r *TaskRepository) List(ctx context.Context, userID string, q models.ListT
 	where := []string{"user_id = $1", "status != 'archived'"}
 
 	if q.Search != "" {
-		where = append(where, fmt.Sprintf("title ILIKE $%d", argIdx))
+		where = append(where, fmt.Sprintf("(title ILIKE $%d OR description ILIKE $%d)", argIdx, argIdx))
 		args = append(args, "%"+q.Search+"%")
 		argIdx++
 	}
