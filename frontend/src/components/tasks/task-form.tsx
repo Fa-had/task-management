@@ -57,7 +57,7 @@ export function TaskForm({ task, onClose }: Props) {
       due_date: task?.due_date ? task.due_date.split("T")[0] : null,
     },
   });
-
+  const isHashTyped = watch("title").includes("#");
   // Close on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -210,7 +210,7 @@ export function TaskForm({ task, onClose }: Props) {
               type="submit"
               variant="gradient"
               className="flex-1"
-              disabled={isPending}
+              disabled={isPending || isHashTyped}
             >
               {isPending ? (
                 <>
